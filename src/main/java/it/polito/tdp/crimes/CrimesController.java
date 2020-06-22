@@ -7,6 +7,7 @@ package it.polito.tdp.crimes;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.crimes.model.Arco;
 import it.polito.tdp.crimes.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -25,16 +26,16 @@ public class CrimesController {
     private URL location;
 
     @FXML // fx:id="boxCategoria"
-    private ComboBox<?> boxCategoria; // Value injected by FXMLLoader
+    private ComboBox<String> boxCategoria; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxAnno"
-    private ComboBox<?> boxAnno; // Value injected by FXMLLoader
+    private ComboBox<Integer> boxAnno; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnAnalisi"
     private Button btnAnalisi; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxArco"
-    private ComboBox<?> boxArco; // Value injected by FXMLLoader
+    private ComboBox<Arco> boxArco; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnPercorso"
     private Button btnPercorso; // Value injected by FXMLLoader
@@ -45,13 +46,51 @@ public class CrimesController {
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Crea grafo...\n");
+    	
+    	if(boxCategoria.getValue() == null || boxAnno.getValue()== null) {
+    		txtResult.appendText("selezionare i valori di anno e categoria");
+    		return;
+    	}
+    	
+    	int anno = boxAnno.getValue();
+    	String cId = boxCategoria.getValue();
+    	
+    	
+    	
+    	model.creaGrafo(cId, anno);
+    	
+    	txtResult.appendText(String.format("Grafo creato ! \n"
+    			+ "#Vertici:  %d \n #Archi: %d \n", model.getNV(), model.getNA()));
+    	
+    	txtResult.appendText("Archi di peso massimo:  \n");
+    	for (Arco a: model.getBestArchi()) {
+    		txtResult.appendText(a.toString()+"\n");
+    	}
+    	
+    	boxArco.getItems().setAll(model.getBestArchi());
     }
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Calcola percorso...\n");
+    	Arco a = boxArco.getValue();
+    	
+    	if (a== null) {
+    		txtResult.setText("Selezionare un arco");
+    	}
+    	
+    	String sorgente = a.getId1();
+    	String destinazione = a.getId2();
+    	
+    	txtResult.appendText("Percorso di peso minimo: \n");
+    	
+    	if(model.trovaPercorso(sorgente, destinazione).size()<model.getNV()) {
+    		txtResult.appendText("Non esiste un percorso che tocca tutti i vertici");
+    		return;
+    	}
+    	for(String s: model.trovaPercorso(sorgente, destinazione)) {
+    		txtResult.appendText(s+"\n");
+    	}
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -67,5 +106,7 @@ public class CrimesController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.boxCategoria.getItems().setAll(model.getCategorie());
+    	this.boxAnno.getItems().setAll(model.getAnni());
     }
 }
